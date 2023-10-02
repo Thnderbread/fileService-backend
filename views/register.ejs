@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage</title>
+    <script>
+        async function submit() {
+            const response = await fetch("/auth/register", {
+                method: "POST"
+            })
+            const parsed = await response.json()
+            console.log(parsed)
+        }
+    </script>
+</head>
+
+<body>
+    <form onsubmit="() => submit()" method="post">
+        <label for="email">email</label>
+        <input type="text" id="email">
+        <label for="password">password</label>
+        <input type="text" id="password">
+        <button type="submit">Submit</button>
+    </form>
+</body>
+
+</html>
