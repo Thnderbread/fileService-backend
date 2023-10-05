@@ -2,22 +2,22 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const FileSchema = new Schema({
-    file_url: {
+    fileUrl: {
         type: String,
     },
-    filename: {
+    fileName: {
         type: String,
         required: true,
     },
-    file_size: {
+    fileSize: {
         type: Number,
         required: true
     },
-    file_upload_date: {
+    fileUploadDate: {
         type: Date,
         default: Date.now,
     },
-    file_modified_date: {
+    fileModifiedDate: {
         type: Date,
     },
     uploader: {

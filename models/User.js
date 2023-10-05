@@ -19,9 +19,14 @@ const UserSchema = new Schema({
         required: false
     },
     files: {
-        type: [String],
-        ref: "File"
-    }
+        type: [{
+            fileId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "File"
+            },
+            fileName: String
+        }],
+    },
 })
 
 module.exports = mongoose.model("User", UserSchema);
