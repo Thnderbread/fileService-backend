@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -7,6 +8,8 @@ const connectDB = require('./config/connection');
 const passportSetup = require('./config/passport-setup');
 const ensureAuthenticated = require('./middleware/ensureAuthenticated');
 const app = express();
+
+global.__uploaddir = path.join(__dirname, 'uploads');
 
 // Connect to MongoDB
 connectDB();
