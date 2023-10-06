@@ -16,7 +16,7 @@ if (process.env.ENVIRONMENT == 'DEV') {
     __uploaddir = path.join(__dirname, '..', 'uploads')
 }
 
-async function saveNewFile(req, res, next) {
+async function saveNewFile(req, res) {
     const MAX_FILE_SIZE_IN_BYTES = 30 * 1024 * 1024 // 30 mb max * 1024 kbs * 1024 bytes
 
     // support text, images, videos, audio
@@ -33,7 +33,6 @@ async function saveNewFile(req, res, next) {
 
     if (file === undefined) {
         throw new CustomError('FileError', 400, 'Missing file.');
-
 
         // return res.status(400).json({ error: "Missing file." })
     }
@@ -57,7 +56,7 @@ async function saveNewFile(req, res, next) {
             ? 'txt'
             : mimeType === 'audio/mpeg'
                 ? 'mp3'
-                : mime.lookup(file.name).split('/').pop();
+                : mimeType.split('/').pop();
 
         // ! remove this - add next function for middleware
         if (!mimeType || !supportedMimeTypes.includes(mimeType)) {
@@ -87,7 +86,7 @@ async function saveNewFile(req, res, next) {
         // using the unique MongoDB id as the filename in our system.
         // use the file type detected by mime module as the file extension to enforce predictable naming
 
-        const fileUrl = path.join(__uploaddir, `${newFile.id}.${fileType.split('/').pop()}`)
+        const fileUrl = path.join(__uploaddir, `${newFile.id}.${fileType}`)
         // __uploaddir + `/uploads/${newFile.id}.${fileType.split('/').pop()}`;
         await fs.writeFile(fileUrl, file.data);
 
@@ -111,7 +110,7 @@ async function saveNewFile(req, res, next) {
     }
 }
 
-async function renameFile(req, res, next) {
+async function renameFile(req, res) {
     const fileId = req.params.fileid;
     const newFilename = req.params.filename;
 
@@ -173,7 +172,7 @@ async function renameFile(req, res, next) {
     return res.status(201).json({ message: "File renamed successfully." })
 }
 
-async function deleteFile(req, res, next) {
+async function deleteFile(req, res) {
     const fileId = req.params.fileid;
 
     let foundUser;
@@ -236,7 +235,7 @@ async function deleteFile(req, res, next) {
     return res.status(200).json({ message: "File deleted successfully." });
 }
 
-async function sendFileToUser(req, res, next) {
+async function sendFileToUser(req, res) {
     const fileId = req.params.fileid;
 
     let userFile;
@@ -258,9 +257,22 @@ async function sendFileToUser(req, res, next) {
     return res.download(userFile.fileUrl, userFile.fileName);
 }
 
+async function retrieveUserFiles(req, res) {
+    try {
+        const userFiles = await File.find(
+            { uploader: req.user },
+            'fileName fileSize fileUploadDate fileModifiedDate'
+        );
+        return res.status(200).json({ userFiles: userFiles });
+    } catch (error) {
+        throw new CustomError(error.name, 500, error.message)
+    }
+}
+
 module.exports = {
     deleteFile,
     renameFile,
     saveNewFile,
     sendFileToUser,
+    retrieveUserFiles
 }
