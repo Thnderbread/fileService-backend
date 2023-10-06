@@ -43,15 +43,42 @@ const testFiles = [
         uploader: testusers[0]._id
     },
     {
+        fileName: 'testAgain.mp3',
+        fileSize: 3000,
+        uploader: testusers[0]._id
+    },
+    {
+        fileName: 'testUnoMas.mp4',
+        fileSize: 5000,
+        uploader: testusers[0]._id
+    },
+
+    {
         fileName: 'test.mp3',
         fileSize: 3000,
         uploader: testusers[1]._id
     },
     {
-        fileName: 'test.gif',
+        fileName: 'another1.gif',
+        fileSize: 10000,
+        uploader: testusers[1]._id
+    },
+
+    {
+        fileName: 'test.txt',
         fileSize: 10000,
         uploader: testusers[2]._id
-    }
+    },
+    {
+        fileName: 'test.mp4',
+        fileSize: 20000,
+        uploader: testusers[2]._id
+    },
+    {
+        fileName: 'testingMore.mp3',
+        fileSize: 6000,
+        uploader: testusers[2]._id
+    },
 ]
 
 beforeAll(async () => {
@@ -74,4 +101,4 @@ afterAll(async () => {
     await mongoServer.stop();
 });
 
-module.exports = { testusers, tempDir };
+module.exports = { testusers, tempDir, testFiles };

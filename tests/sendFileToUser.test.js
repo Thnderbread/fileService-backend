@@ -56,7 +56,7 @@ describe('sendFileToUser', () => {
     });
 
     // 
-    it('should return a 409 error if the user file is not found but user id is given.', async () => {
+    it('should return a 409 error if the user file is not found but user id is given', async () => {
         const req = {
             params: {
                 fileid: testusers[2].files[0].fileId
