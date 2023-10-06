@@ -1,12 +1,24 @@
+require('dotenv').config();
 const path = require('path');
 const fs = require('fs/promises');
 const mime = require('mime-types');
 const File = require('../models/File');
 const User = require('../models/User');
-
 const mongoose = require('mongoose');
 
-const __uploaddir = path.join(__dirname, '..');
+
+let __uploaddir;
+
+if (process.env.ENVIRONMENT === 'DEV') {
+    let { tempDir } = require('../tests/setupTests');
+    __uploaddir = tempDir
+} else {
+    __uploaddir = path.join(__dirname, '..', 'uploads')
+}
+
+// process.env.ENVIRONMENT === 'DEV' ?
+//     path.join(__dirname, '..', 'tmp')
+//     : path.join(__dirname, '..', 'uploads');
 
 async function saveNewFile(req, res, next) {
     const MAX_FILE_SIZE_IN_BYTES = 30 * 1024 * 1024 // 30 mb max * 1024 kbs * 1024 bytes
@@ -66,7 +78,7 @@ async function saveNewFile(req, res, next) {
         // using the unique MongoDB id as the filename in our system.
         // use the file type detected by mime module as the file extension to enforce predictable naming
 
-        const fileUrl = path.join(__uploaddir, 'uploads', `${newFile.id}.${fileType.split('/').pop()}`)
+        const fileUrl = path.join(__uploaddir, `${newFile.id}.${fileType.split('/').pop()}`)
         // __uploaddir + `/uploads/${newFile.id}.${fileType.split('/').pop()}`;
         await fs.writeFile(fileUrl, file.data);
 
@@ -173,21 +185,16 @@ async function deleteFile(req, res, next) {
 
         // delete file from File collection
         const deletedFile = await File.findByIdAndDelete(fileId);
-        console.log('Deleted the file!');
         const fileUrl = deletedFile.fileUrl;
-        console.log('Got the file url!');
 
         // remove file from filesystem
-        console.log('Deleting the file!');
         await fs.unlink(fileUrl);
-        console.log('Deleted the file!');
-
 
         await foundUser.save();
         await fileFromFilesystem.save();
     } catch (error) {
         // ! remove this - add next function for middleware
-        console.error(error);
+        console.error(`something wented wrong: ${error}`);
         return res.status(500).json({ error: "Something went wrong." });
     }
     return res.status(200).json({ message: "File deleted successfully." });
@@ -198,7 +205,7 @@ async function sendFileToUser(req, res, next) {
 
     try {
         userFile = await File.findById(fileId);
-        if (!userFile || userFile.uploader !== req.user) {
+        if (userFile === undefined || !userFile?.uploader?.equals(req.user)) {
             return res.status(409).json({ error: "File not found." })
         }
 
