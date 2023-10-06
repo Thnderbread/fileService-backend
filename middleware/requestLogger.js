@@ -2,7 +2,7 @@ const { v4: uuid } = require('uuid');
 const createLogger = require('../logs/loggerConfig');
 const infoLogger = createLogger("file", "info", "../logs/infoLog.log");
 
-function logInfo(req, res, next) {
+function requestLogger(req, res, next) {
     res.on("finish", () => {
         infoLogger.info(
             `${uuid()} - 
@@ -16,4 +16,4 @@ function logInfo(req, res, next) {
     })
 }
 
-module.exports = logInfo;
+module.exports = requestLogger;
