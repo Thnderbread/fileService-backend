@@ -1,12 +1,19 @@
+const { v4: uuid } = require('uuid');
 const createLogger = require("../logs/loggerConfig");
 const errorLogger = createLogger("file", "error", "../logs/errorLog.log");
 
-function logErrors(error, req, res, next) {
+function logErrors(error, req, res) {
   errorLogger.error(
-    `${new Date().toISOString()} - ${error.name}: ${error.message} - ${req.method
-    } ${req.originalUrl} - Status: ${res.statusCode}\n${error.stack}\n`
+    `${uuid()} - 
+    Date: ${new Date().toISOString()} - 
+    Error: ${error.name}: ${error.message} - 
+    Method: ${req.method} -
+    Referrer: ${req.headers.referer} -
+    Original URI: ${req.originalUrl} - 
+    URI: ${req.url} -
+    Status: ${error.statusCode || res.statusCode}\n
+    Error Stack: ${error.stack}\n`
   );
-  next(error);
 }
 
 module.exports = logErrors;

@@ -9,36 +9,24 @@ router.route('/register')
     })
     .post((req, res, next) => {
         passport.authenticate('local-register', (error, user, info) => {
-            console.log('\n');
-            console.log(error);
-            console.log(user);
-            console.log(info);
+            // console.log('\n');
+            // console.log(error);
+            // console.log(user);
+            // console.log(info);
 
             if (error) {
-                res.status(401).json({ error })
+                error.statusCode = info.statusCode
+                error.displayMessage = info.message
+                return next(error)
             } else if (user) {
-                res.status(200).json({ info })
-            } else {
-                next();
-            }
+                return res.status(200).json({ info })
+            } // else {
+            //     next();
+            // }
 
             res.status(500).json({ message: info.message })
         })(req, res);
-    },
-    )
-//     passport.authenticate('local-register'), (error, user, info) => {
-//         console.log("Hello!")
-//         if (error) {
-//             return next(error)
-//         }
-
-//         if (user) {
-//             return res.status(200).json({ message: "User created successfully.", User: user.username })
-//         }
-
-//         return res.status(info.statusCode).json({ error: info.error })
-//     }
-// );
+    })
 
 // regular auth login
 router.route('/login')
@@ -49,14 +37,16 @@ router.route('/login')
         console.log('hello!');
         passport.authenticate('local', { failureFlash: true }), (error, user, info) => {
             if (error) {
+                error.statusCode = info.statusCode
+                error.displayMessage = info.message
                 return next(error)
             }
 
             if (user) {
-                return res.status(200).json({ message: "Login success.", User: user.username })
+                return res.status(200).json({ message: "Login success.", User: user.username });
             }
 
-            return res.status(info.statusCode).json({ error: info.error })
+            // return res.status(info.statusCode).json({ error: info.error })
         }
     })
 

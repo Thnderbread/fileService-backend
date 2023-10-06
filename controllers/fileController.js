@@ -2,23 +2,19 @@ require('dotenv').config();
 const path = require('path');
 const fs = require('fs/promises');
 const mime = require('mime-types');
+const mongoose = require('mongoose');
 const File = require('../models/File');
 const User = require('../models/User');
-const mongoose = require('mongoose');
-
+const CustomError = require('../errors/customError')
 
 let __uploaddir;
 
-if (process.env.ENVIRONMENT === 'DEV') {
+if (process.env.ENVIRONMENT == 'DEV') {
     let { tempDir } = require('../tests/setupTests');
     __uploaddir = tempDir
 } else {
     __uploaddir = path.join(__dirname, '..', 'uploads')
 }
-
-// process.env.ENVIRONMENT === 'DEV' ?
-//     path.join(__dirname, '..', 'tmp')
-//     : path.join(__dirname, '..', 'uploads');
 
 async function saveNewFile(req, res, next) {
     const MAX_FILE_SIZE_IN_BYTES = 30 * 1024 * 1024 // 30 mb max * 1024 kbs * 1024 bytes
@@ -36,12 +32,17 @@ async function saveNewFile(req, res, next) {
     const file = req.body.file;
 
     if (file === undefined) {
-        return res.status(400).json({ error: "Missing file." })
+        throw new CustomError('FileError', 400, 'Missing file.');
+
+
+        // return res.status(400).json({ error: "Missing file." })
     }
 
     if (file.size > MAX_FILE_SIZE_IN_BYTES) {
         // insufficient storage
-        return res.status(507).json({ error: "File too large." })
+        throw new CustomError('FileError', 507, 'File too large.');
+
+        // return res.status(507).json({ error: "File too large." })
     }
 
     // creating a filetype variable here to make sure it's valid.
@@ -60,11 +61,19 @@ async function saveNewFile(req, res, next) {
 
         // ! remove this - add next function for middleware
         if (!mimeType || !supportedMimeTypes.includes(mimeType)) {
-            return res.status(415).json({ error: "Unsupported file type. JPEG, PNG, MP3, MP4, GIF, and TXT files are allowed." }) // unsupported media type
+            throw new CustomError(
+                'FileError',
+                415,
+                "Unsupported file type. JPEG, PNG, MP3, MP4, GIF, and TXT files are allowed."
+            )
+
+            // return res.status(415).json({ error: "Unsupported file type. JPEG, PNG, MP3, MP4, GIF, and TXT files are allowed." }) // unsupported media type
         }
     } catch (error) {
         // ! remove this - add next function for middleware
-        return res.status(500).json({ error: "Something went wrong." })
+        throw new CustomError(error.name, error.statusCode || 500, error.message);
+
+        // return res.status(500).json({ error: "Something went wrong." })
     }
 
     try {
@@ -95,8 +104,10 @@ async function saveNewFile(req, res, next) {
         return res.status(201).json({ message: "File saved successfully.", fileId: newFile.id });
     } catch (error) {
         // ! remove this - add next function for middleware
-        console.error(error);
-        return res.status(500).json({ error: "Something went wrong." })
+        throw new CustomError(error.name, error.statusCode || 500, error.message);
+
+        // console.error(error);
+        // return res.status(500).json({ error: "Something went wrong." })
     }
 }
 
@@ -106,7 +117,10 @@ async function renameFile(req, res, next) {
 
     // Make sure new name was supplied
     if (!newFilename || !fileId) {
-        return res.status(400).json({ error: "Missing filename or file id." })
+        // ! remove this - middleware
+        throw new CustomError('FileError', 400, 'Missing filename or file id.');
+
+        // return res.status(400).json({ error: "Missing filename or file id." })
     }
 
     // Find user and grab their file
@@ -115,17 +129,26 @@ async function renameFile(req, res, next) {
     try {
         foundUser = await User.findById(req.user);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: "Something went wrong." })
+        // ! remove this - middleware
+        throw new CustomError(error.name, 500, error.message);
+
+        // console.error(error);
+        // return res.status(500).json({ error: "Something went wrong." })
     }
 
     const userFile = foundUser?.files.find(file => file.fileId.equals(fileId));
 
     // Check that file is found. Check old filename vs new filename.
-    if (!userFile) {
-        return res.status(409).json({ error: "Could not find specified file." })
+    if (userFile === undefined) {
+        // ! remove this - middleware
+        throw new CustomError('FileError', 409, 'File not found.');
+
+        // return res.status(409).json({ error: "Could not find specified file." })
     } else if (userFile.fileName === newFilename.toLowerCase()) {
-        return res.status(400).json({ error: "New filename cannot be same as old filename." });
+        // ! remove this - middleware
+        throw new CustomError('FileError', 400, 'New filename cannot be the same as old filename.');
+
+        // return res.status(400).json({ error: "New filename cannot be same as old filename." });
     }
 
     try {
@@ -140,8 +163,11 @@ async function renameFile(req, res, next) {
         await foundUser.save();
         await fileFromFilesystem.save();
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Something went wrong." })
+        // ! remove this - middleware
+        throw new CustomError('Error', error.statusCode || 500, error.message)
+
+        // console.error(error);
+        // res.status(500).json({ error: "Something went wrong." })
     }
 
     return res.status(201).json({ message: "File renamed successfully." })
@@ -160,8 +186,10 @@ async function deleteFile(req, res, next) {
         fileFromFilesystem = await File.findById(fileId);
     } catch (error) {
         // ! remove this - add next function for middleware
-        console.error(error);
-        return res.status(500).json({ error: "Something went wrong." })
+        throw new CustomError('Error', 500, error.message)
+
+        // console.error(error);
+        // return res.status(500).json({ error: "Something went wrong." })
     }
 
     // find the file in the user's User record
@@ -170,11 +198,17 @@ async function deleteFile(req, res, next) {
     const fileIndex = foundUser.files.findIndex(file => file.fileId.equals(fileId));
 
     // ensure the file actually exists
-    if (fileIndex === -1 || !fileFromFilesystem) {
+    if (fileIndex === -1 || fileFromFilesystem === undefined) {
         // ! remove this - add next function for middleware
-        return res.status(409).json({ error: "File not found." })
-    } else if (fileFromFilesystem.uploader !== req.user) {
-        return res.status(403).json({ error: "You don't have access to this file." });
+        throw new CustomError('FileError', 409, 'File not found.');
+
+        // return res.status(409).json({ error: "File not found." })
+    } else if (!fileFromFilesystem?.uploader.equals(req.user)) {
+        // ! remove this - add next function for middleware
+        throw new CustomError('FileError', 409, 'File not found.');
+
+        // using 409 error for obscurity...may revert to 403 error in the future
+        // return res.status(403).json({ error: "You don't have access to this file." });
     }
 
     try {
@@ -194,8 +228,10 @@ async function deleteFile(req, res, next) {
         await fileFromFilesystem.save();
     } catch (error) {
         // ! remove this - add next function for middleware
-        console.error(`something wented wrong: ${error}`);
-        return res.status(500).json({ error: "Something went wrong." });
+        throw new CustomError('Error', 500, error.message)
+
+        // console.error(`something wented wrong: ${error}`);
+        // return res.status(500).json({ error: "Something went wrong." });
     }
     return res.status(200).json({ message: "File deleted successfully." });
 }
@@ -203,20 +239,23 @@ async function deleteFile(req, res, next) {
 async function sendFileToUser(req, res, next) {
     const fileId = req.params.fileid;
 
+    let userFile;
     try {
         userFile = await File.findById(fileId);
         if (userFile === undefined || !userFile?.uploader?.equals(req.user)) {
-            return res.status(409).json({ error: "File not found." })
+            // ! remove this - add next function for middleware
+            throw new CustomError('FileError', 409, "File not found.");
+            // return res.status(409).json({ error: "File not found." })
         }
-
-        // using the name from the database to retrieve file extension.
-        return res.download(userFile.fileUrl, userFile.fileName)
-
     } catch (error) {
         // ! remove this - add next function for middleware
-        console.error(error);
-        return res.status(500).json({ error: "Something went wrong." })
+        throw new CustomError(error.name, error.statusCode || 500, error.message);
+        // console.error(error);
+        // return res.status(500).json({ error: "Something went wrong." })
     }
+
+    // using the name from the database to retrieve file extension.
+    return res.download(userFile.fileUrl, userFile.fileName);
 }
 
 module.exports = {

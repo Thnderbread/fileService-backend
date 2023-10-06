@@ -1,5 +1,6 @@
 const { testusers } = require('./setupTests');
 const { saveNewFile } = require('../controllers/fileController.js');
+const CustomError = require('../errors/customError');
 
 describe('saveNewFile', () => {
     // File is defined and valid
@@ -81,15 +82,17 @@ describe('saveNewFile', () => {
             user: testusers[0]._id
         };
 
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        };
+        try {
+            await saveNewFile(req);
+        } catch (error) {
+            expect(error).toBeInstanceOf(CustomError);
+            expect(error.name).toBe('FileError');
+            expect(error.message).toBe('Missing file.');
+            expect(error.statusCode).toBe(400)
+        }
 
-        await saveNewFile(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.json).toHaveBeenCalledWith({ error: "Missing file." });
+        // expect(res.status).toHaveBeenCalledWith(400);
+        // expect(res.json).toHaveBeenCalledWith({ error: "Missing file." });
     });
 
     // File size is too large
@@ -105,15 +108,17 @@ describe('saveNewFile', () => {
             user: testusers[0]._id
         };
 
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        };
+        try {
+            await saveNewFile(req);
+        } catch (error) {
+            expect(error).toBeInstanceOf(CustomError);
+            expect(error.name).toBe('FileError');
+            expect(error.message).toBe('File too large.');
+            expect(error.statusCode).toBe(507)
+        }
 
-        await saveNewFile(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(507);
-        expect(res.json).toHaveBeenCalledWith({ error: "File too large." });
+        // expect(res.status).toHaveBeenCalledWith(507);
+        // expect(res.json).toHaveBeenCalledWith({ error: "File too large." });
     });
 
     // File type is unsupported
@@ -129,14 +134,16 @@ describe('saveNewFile', () => {
             user: testusers[0]._id
         };
 
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        };
+        try {
+            await saveNewFile(req);
+        } catch (error) {
+            expect(error).toBeInstanceOf(CustomError);
+            expect(error.name).toBe('FileError');
+            expect(error.message).toBe('Unsupported file type. JPEG, PNG, MP3, MP4, GIF, and TXT files are allowed.'); 0
+            expect(error.statusCode).toBe(415)
+        }
 
-        await saveNewFile(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(415);
-        expect(res.json).toHaveBeenCalledWith({ error: "Unsupported file type. JPEG, PNG, MP3, MP4, GIF, and TXT files are allowed." });
+        // expect(res.status).toHaveBeenCalledWith(415);
+        // expect(res.json).toHaveBeenCalledWith({ error: "Unsupported file type. JPEG, PNG, MP3, MP4, GIF, and TXT files are allowed." });
     });
 });

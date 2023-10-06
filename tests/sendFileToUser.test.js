@@ -3,7 +3,8 @@ const { sendFileToUser } = require('../controllers/fileController');
 const File = require('../models/File');
 const path = require('path')
 const tmp = require('tmp')
-const fs = require('fs')
+const fs = require('fs');
+const CustomError = require('../errors/customError');
 
 describe('sendFileToUser', () => {
     let tempFilePath;
@@ -63,20 +64,21 @@ describe('sendFileToUser', () => {
             user: testusers[2]._id
         };
 
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            download: jest.fn(),
-        };
-
         const userFile = {};
 
         File.findById = jest.fn().mockResolvedValue(userFile);
 
-        await sendFileToUser(req, res);
+        try {
+            await sendFileToUser(req);
+        } catch (error) {
+            expect(error).toBeInstanceOf(CustomError);
+            expect(error.name).toBe('FileError');
+            expect(error.message).toBe('File not found.');
+            expect(error.statusCode).toBe(409)
+        }
 
-        expect(res.status).toHaveBeenCalledWith(409);
-        expect(res.json).toHaveBeenCalledWith({ error: "File not found." });
+        // expect(res.status).toHaveBeenCalledWith(409);
+        // expect(res.json).toHaveBeenCalledWith({ error: "File not found." });
     });
 
     // 409 error when file uploader doesn't match given user
@@ -88,12 +90,6 @@ describe('sendFileToUser', () => {
             user: 'invalidUserId'
         };
 
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-            download: jest.fn(),
-        };
-
         const userFile = {
             fileUrl: `${tempFilePath}`,
             fileName: `${req.params.fileid}.gif`,
@@ -102,9 +98,16 @@ describe('sendFileToUser', () => {
 
         File.findById = jest.fn().mockResolvedValue(userFile);
 
-        await sendFileToUser(req, res);
+        try {
+            await sendFileToUser(req);
+        } catch (error) {
+            expect(error).toBeInstanceOf(CustomError);
+            expect(error.name).toBe('FileError');
+            expect(error.message).toBe('File not found.');
+            expect(error.statusCode).toBe(409)
+        }
 
-        expect(res.status).toHaveBeenCalledWith(409);
-        expect(res.json).toHaveBeenCalledWith({ error: "File not found." });
+        // expect(res.status).toHaveBeenCalledWith(409);
+        // expect(res.json).toHaveBeenCalledWith({ error: "File not found." });
     });
 })

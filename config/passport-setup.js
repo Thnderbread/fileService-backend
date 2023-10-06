@@ -10,8 +10,9 @@ passport.serializeUser(async (user, done) => {
     try {
         done(null, user.id);
     } catch (error) {
-        done(error);
+        // ! remove this
         console.error(error);
+        return done(error);
         // need to engage error handling middleware here?
         // allow passport to handle the error. returns 302 status.
     }
@@ -23,8 +24,9 @@ passport.deserializeUser(async (id, done) => {
         done(null, user);
         console.log('Successfully retrieved user!: ', user);
     } catch (error) {
-        done(error);
+        // ! remove this
         console.error(error);
+        return done(error);
         // need to engage error handling middleware here?
         // allow passport to handle the error. returns 302 status.
     }
@@ -51,8 +53,9 @@ passport.use(new GoogleStrategy({
             return done(null, newUser.id);
         }
     } catch (error) {
-        // ! remove
+        // ! remove this
         console.error(error);
+        return done(error)
         // need to engage error handling middleware here?
         // allow passport to handle the error. returns 302 status.
     }
@@ -67,16 +70,21 @@ passport.use(new LocalStrategy({
 
     try {
         const user = await User.findOne({ email });
-        if (!user) return done(null, false, { code: "AUTH_FAILURE", statusCode: 404, message: "Could not find a user with that email." });
+        if (!user) {
+            return done(null, false, { code: "AUTH_FAILURE", statusCode: 401, message: "Could not find a user with that email." });
+        }
 
         const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) return done(null, false, { code: "AUTH_FAILURE", statusCode: 403, message: "Invalid password." });
+
+        if (!validPassword) {
+            return done(null, false, { code: "AUTH_FAILURE", statusCode: 401, message: "Invalid password." });
+        }
 
         return done(null, user);
     } catch (error) {
         // ! remove
         console.error(error);
-        return done(null, false);
+        return done(error);
     }
 }))
 
@@ -109,7 +117,7 @@ passport.use('local-register', new LocalStrategy({
             return done(null, false,
                 {
                     code: "REGISTRATION_FAILURE",
-                    statusCode: 400,
+                    statusCode: 401,
                     message: error.message
                 }
             )
@@ -124,6 +132,7 @@ passport.use('local-register', new LocalStrategy({
 
         return done(null, newUser.id)
     } catch (error) {
+        // ! remove this
         console.error(error);
         return done(error);
     }
