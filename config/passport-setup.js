@@ -13,8 +13,6 @@ passport.serializeUser(async (user, done) => {
         // ! remove this
         console.error(error);
         return done(error);
-        // need to engage error handling middleware here?
-        // allow passport to handle the error. returns 302 status.
     }
 })
 
@@ -27,8 +25,6 @@ passport.deserializeUser(async (id, done) => {
         // ! remove this
         console.error(error);
         return done(error);
-        // need to engage error handling middleware here?
-        // allow passport to handle the error. returns 302 status.
     }
 })
 
@@ -42,7 +38,6 @@ passport.use(new GoogleStrategy({
     try {
         const user = await User.findOne({ googleOAuthId: profile.id });
         if (user) {
-            // should proceed to "s e r i a l i z e" user here
             return done(null, user.id);
         } else {
             const newUser = await User.create({
@@ -56,8 +51,6 @@ passport.use(new GoogleStrategy({
         // ! remove this
         console.error(error);
         return done(error)
-        // need to engage error handling middleware here?
-        // allow passport to handle the error. returns 302 status.
     }
 }))
 
@@ -71,18 +64,29 @@ passport.use(new LocalStrategy({
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return done(null, false, { code: "AUTH_FAILURE", statusCode: 401, message: "Could not find a user with that email." });
+            return done(null, false,
+                {
+                    code: "AUTH_FAILURE",
+                    statusCode: 401,
+                    message: "Could not find a user with that email."
+                }
+            );
         }
 
         const validPassword = await bcrypt.compare(password, user.password);
 
         if (!validPassword) {
-            return done(null, false, { code: "AUTH_FAILURE", statusCode: 401, message: "Invalid password." });
+            return done(null, false,
+                {
+                    code: "AUTH_FAILURE",
+                    statusCode: 401,
+                    message: "Invalid password."
+                }
+            );
         }
 
         return done(null, user);
     } catch (error) {
-        // ! remove
         console.error(error);
         return done(error);
     }
@@ -104,17 +108,24 @@ passport.use('local-register', new LocalStrategy({
             }
         )
     }
+
     try {
         const userExists = await User.findOne({ email });
 
         if (userExists) {
-            return done(null, false, { code: "REGISTRATION_FAILURE", statusCode: 409, message: "Email already in use in database." });
+            return done(null, false,
+                {
+                    code: "REGISTRATION_FAILURE",
+                    statusCode: 409,
+                    message: "Email already in use in database."
+                }
+            );
         }
 
         try {
             validateUserDetails({ email, username, password, matchPassword });
         } catch (error) {
-            return done(null, false,
+            done(null, false,
                 {
                     code: "REGISTRATION_FAILURE",
                     statusCode: 401,
