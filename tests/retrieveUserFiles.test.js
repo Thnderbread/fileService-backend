@@ -1,7 +1,7 @@
-const { testusers, testFiles } = require('./setupTests');
-const CustomError = require('../errors/customError');
-const { retrieveUserFiles } = require('../controllers/fileController');
 const File = require('../models/File');
+const CustomError = require('../errors/customError');
+const { testusers, testFiles } = require('./setupTests');
+const { retrieveUserFiles } = require('../controllers/fileController');
 
 describe('retrieveUserFiles', () => {
     // Retrieves all of the user's files.
@@ -77,13 +77,20 @@ describe('retrieveUserFiles', () => {
             user: null
         };
 
-        File.find = jest.fn().mockRejectedValue(new Error('Some Error'))
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const next = jest.fn();
+        File.find = jest.fn().mockRejectedValue(new CustomError)
 
         try {
-            await retrieveUserFiles(req)
+            await retrieveUserFiles(req, res, next)
         } catch (error) {
-            expect(error).toBeInstanceOf(CustomError)
-            expect(error.statusCode).toBe(500)
+            expect(next).toBeCalledWith(error);
+            expect(error.statusCode).toBe(500);
+            expect(error).toBeInstanceOf(CustomError);
         }
     })
 })

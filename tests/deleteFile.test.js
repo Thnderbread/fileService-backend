@@ -19,7 +19,7 @@ describe('deleteFile', () => {
 
         // tempFile
         tempFilePath = path.join(`${tempDir}`, `${testusers[0].files[0].fileId}.txt`)
-        fs.writeFile(tempFilePath, 'Test stuff!', () => { console.log('hello') })
+        fs.writeFile(tempFilePath, 'Test stuff!', () => { return })
     })
 
 
@@ -92,6 +92,11 @@ describe('deleteFile', () => {
             user: testusers[0]._id
         };
 
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        };
+
         const foundUser = {
             files: [
                 {
@@ -105,23 +110,22 @@ describe('deleteFile', () => {
 
         User.findById = jest.fn().mockResolvedValue(foundUser);
         File.findById = jest.fn().mockResolvedValue(fileFromFilesystem);
-
-        // await deleteFile(req, res);
+        const next = jest.fn()
 
         try {
-            await deleteFile(req)
+            await deleteFile(req, res, next)
         } catch (error) {
+            expect(next).toHaveBeenCalledWith(error)
             expect(error).toBeInstanceOf(CustomError);
+
+            expect(error.statusCode).toBe(409);
             expect(error.name).toBe('FileError');
             expect(error.message).toBe('File not found.');
-            expect(error.statusCode).toBe(409)
         }
 
         expect(User.findById).toHaveBeenCalledWith(req.user);
         expect(File.findById).toHaveBeenCalledWith(req.params.fileid);
 
-        // expect(res.status).toHaveBeenCalledWith(409);
-        // expect(res.json).toHaveBeenCalledWith({ error: "File not found." });
     });
 
     // Attempt to delete a file with an invalid file ID
@@ -133,6 +137,11 @@ describe('deleteFile', () => {
             user: testusers[0]._id
         };
 
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        };
+
         const foundUser = {
             files: [
                 {
@@ -144,23 +153,23 @@ describe('deleteFile', () => {
 
         const fileFromFilesystem = null;
 
+        const next = jest.fn()
         User.findById = jest.fn().mockResolvedValue(foundUser);
         File.findById = jest.fn().mockResolvedValue(fileFromFilesystem);
 
-        // await deleteFile(req, res);
         try {
-            await deleteFile(req)
+            await deleteFile(req, res, next)
         } catch (error) {
+            expect(next).toHaveBeenCalledWith(error)
             expect(error).toBeInstanceOf(CustomError);
+
+            expect(error.statusCode).toBe(409)
             expect(error.name).toBe('FileError');
             expect(error.message).toBe('File not found.');
-            expect(error.statusCode).toBe(409)
         }
 
         expect(User.findById).toHaveBeenCalledWith(req.user);
         expect(File.findById).toHaveBeenCalledWith(req.params.fileid);
-        // expect(res.status).toHaveBeenCalledWith(409);
-        // expect(res.json).toHaveBeenCalledWith({ error: "File not found." });
     });
 
     // Attempt to delete a file with a user who does not own it
@@ -170,6 +179,11 @@ describe('deleteFile', () => {
                 fileid: testusers[0].files[0].fileId
             },
             user: testusers[1]._id
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
         };
 
         const foundUser = {
@@ -185,23 +199,23 @@ describe('deleteFile', () => {
             uploader: testusers[0]._id
         };
 
+        const next = jest.fn()
         User.findById = jest.fn().mockResolvedValue(foundUser);
         File.findById = jest.fn().mockResolvedValue(fileFromFilesystem);
 
         // await deleteFile(req, res);
         try {
-            await deleteFile(req)
+            await deleteFile(req, res, next)
         } catch (error) {
+            expect(next).toHaveBeenCalledWith(error)
             expect(error).toBeInstanceOf(CustomError);
-            expect(error.name).toBe('FileError');
-            expect(error.message).toBe('File not found.');
+
             expect(error.statusCode).toBe(409)
+            expect(error.name).toBe('FileError');
+            expect(error.message).toBe('File not found.')
         }
 
         expect(User.findById).toHaveBeenCalledWith(req.user);
         expect(File.findById).toHaveBeenCalledWith(req.params.fileid);
-
-        // expect(res.status).toHaveBeenCalledWith(403);
-        // expect(res.json).toHaveBeenCalledWith({ error: "You don't have access to this file." });
     });
 })
