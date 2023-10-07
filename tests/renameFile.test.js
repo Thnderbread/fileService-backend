@@ -25,10 +25,10 @@ describe('renameFile', () => {
             save: jest.fn()
         };
 
+        const next = jest.fn();
         File.findById = jest.fn().mockResolvedValue(fileFromFilesystem);
 
-        await renameFile(req, res);
-
+        await renameFile(req, res, next);
 
         expect(res.status).toHaveBeenCalledWith(201);
         expect(res.json).toHaveBeenCalledWith({ message: "File renamed successfully." })
@@ -43,13 +43,22 @@ describe('renameFile', () => {
             user: testusers[1]._id
         };
 
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const next = jest.fn()
+
         try {
-            await renameFile(req);
+            await renameFile(req, res, next);
         } catch (error) {
+            expect(next).toHaveBeenCalledWith(error);
             expect(error).toBeInstanceOf(CustomError);
+
+            expect(error.statusCode).toBe(400);
             expect(error.name).toBe('FileError');
             expect(error.message).toBe('Missing filename or file id.');
-            expect(error.statusCode).toBe(400)
         }
 
         // expect(res.status).toHaveBeenCalledWith(400);
@@ -65,13 +74,22 @@ describe('renameFile', () => {
             user: testusers[1]._id
         };
 
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const next = jest.fn()
+
         try {
-            await renameFile(req);
+            await renameFile(req, res, next);
         } catch (error) {
+            expect(next).toHaveBeenCalledWith(error);
             expect(error).toBeInstanceOf(CustomError);
+
+            expect(error.statusCode).toBe(400);
             expect(error.name).toBe('FileError');
             expect(error.message).toBe('Missing filename or file id.');
-            expect(error.statusCode).toBe(400)
         }
 
         // expect(res.status).toHaveBeenCalledWith(400);
@@ -88,17 +106,26 @@ describe('renameFile', () => {
             user: testusers[1]._id
         };
 
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const next = jest.fn();
+
         try {
-            await renameFile(req);
+            await renameFile(req, res, next);
         } catch (error) {
+            expect(next).toHaveBeenCalledWith(error);
             expect(error).toBeInstanceOf(CustomError);
+
+            expect(error.statusCode).toBe(409);
             expect(error.name).toBe('FileError');
             expect(error.message).toBe('File not found.');
-            expect(error.statusCode).toBe(409)
         }
 
         // expect(res.status).toHaveBeenCalledWith(409);
-        // expect(res.json).toHaveBeenCalledWith({ error: "Could not find specified file." })
+        // expect(res.json).toHaveBeenCalledWith({ error: "File not found." })
     });
 
     // New filename is the same as old filename with different case
@@ -111,16 +138,25 @@ describe('renameFile', () => {
             user: testusers[1]._id
         };
 
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        }
+
+        const next = jest.fn();
+
         try {
-            await renameFile(req);
+            await renameFile(req, res, next);
         } catch (error) {
+            expect(next).toHaveBeenCalledWith(error);
             expect(error).toBeInstanceOf(CustomError);
+
+            expect(error.statusCode).toBe(400);
             expect(error.name).toBe('FileError');
             expect(error.message).toBe('New filename cannot be the same as old filename.');
-            expect(error.statusCode).toBe(400)
         }
 
         // expect(res.status).toHaveBeenCalledWith(400);
-        // expect(res.json).toHaveBeenCalledWith({ error: "New filename cannot be same as old filename." });
+        // expect(res.json).toHaveBeenCalledWith({ error: "New filename cannot be the same as old filename." });
     });
 })
