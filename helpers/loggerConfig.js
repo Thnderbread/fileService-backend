@@ -1,30 +1,34 @@
+const path = require('path');
 const winston = require('winston');
 
 /**
  * Basic factory function that returns a logger based on input.
- * @param {string} Output - Where the log will be printed. Accepts "file" and defaults to console.
+ * @param {string} Output - Where the log will be printed. Accepts "file" or defaults to console.
  * @param {string} Level - Logging level.
- * @param {string} filename - Desired outfile. Case sensitive.
+ * @param {string} filename - Desired filename. Case sensitive.
  * @returns The created winston logger function.
  */
 
 const createLogger = (output, level, filename) => {
-    const level = level.toLowerCase();
+    const loggingLevel = level.toLowerCase();
+    const logPath = path.join(__dirname, '..', 'logs', filename);
 
-    return output.toLowerCase() === "file" ?
+    return output?.toLowerCase() === "file" ?
         winston.createLogger({
-            level: level,
-            format: winston.format.json(),
+            level: loggingLevel,
+            format: winston.format.printf(({ message }) => {
+                return `\n${message}\n${'-'.repeat(160)}\n`
+            }),
             transports: [
                 new winston.transports.File({
-                    filename: filename,
-                    level: level,
+                    filename: logPath,
+                    level: loggingLevel,
                 })
             ]
         })
         :
         winston.createLogger({
-            level: level,
+            level: loggingLevel,
             format: winston.format.json(),
             transports: [
                 new winston.transports.Console({
@@ -33,7 +37,6 @@ const createLogger = (output, level, filename) => {
                         winston.format.simple()
                     ),
                 }),
-
             ]
         })
 
