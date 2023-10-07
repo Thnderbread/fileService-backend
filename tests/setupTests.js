@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const File = require('../models/File');
 const tmp = require('tmp')
@@ -82,7 +82,6 @@ const testFiles = [
 ]
 
 beforeAll(async () => {
-    console.log('Before all function called');
     mongoServer = await MongoMemoryServer.create();
     const testUri = await mongoServer.getUri();
     await mongoose.connect(testUri, {
