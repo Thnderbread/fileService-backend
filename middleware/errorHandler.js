@@ -15,6 +15,18 @@ function handleErrors(error, req, res, next) {
         Error Stack: ${error.stack}\n`
     );
 
+    console.error(
+        `Log id: ${uuid()}
+        Date: ${new Date().toISOString()}
+        Error: ${error.name}: ${error.message}
+        Method: ${req.method}
+        Referrer: ${req.headers.referer}
+        Original URI: ${req.originalUrl}
+        URI: ${req.url}
+        Response status code: ${error.statusCode || res.statusCode}
+        Error Stack: ${error.stack}\n`
+    )
+
     res.header("Content-Type", "application/json")
 
     // these errors' messages can be shown safely.
@@ -26,19 +38,17 @@ function handleErrors(error, req, res, next) {
     // statusCodes aren't set when an uncaught exception occurs as well.
     if (!error || !error.statusCode ||
         !acceptableStatusCodes.includes(error.statusCode)) {
-        res
+        return res
             .status(500)
             .json({
                 success: false,
                 status: 500,
                 error: "Something went wrong.",
-                stack: process.env.ENVIRONMENT === 'DEV' ? error.stack : {}
+                stack: process.env.ENVIRONMENT === '' ? error.stack : {}
             });
+    } else {
+        return res.status(error.statusCode).json({ error: error.message })
     }
-
-    res.status(error.statusCode).json({ error: error.message })
-
-    next()
 }
 
 module.exports = handleErrors;
