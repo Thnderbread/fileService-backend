@@ -4,4 +4,7 @@
 /node_modules
 jsconfig.json
 errorLog.log
+<<<<<<< HEAD
 /.vscode/settings.json
+=======
+>>>>>>> 48429940c7c5cf95186906d64f649eb40d2def19

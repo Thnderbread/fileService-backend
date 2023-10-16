@@ -49,7 +49,6 @@ async function saveNewFile(req, res, next) {
         next(error);
     }
 
-
     // creating a fileType variable here to capture the extension.
     // will use this later as the file extension when saving.
     let fileType;

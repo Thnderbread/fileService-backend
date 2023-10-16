@@ -38,7 +38,11 @@ function handleErrors(error, req, res, next) {
     // statusCodes aren't set when an uncaught exception occurs as well.
     if (!error || !error.statusCode ||
         !acceptableStatusCodes.includes(error.statusCode)) {
+<<<<<<< HEAD
         return res
+=======
+        res
+>>>>>>> 48429940c7c5cf95186906d64f649eb40d2def19
             .status(500)
             .json({
                 success: false,
@@ -49,6 +53,13 @@ function handleErrors(error, req, res, next) {
     } else {
         return res.status(error.statusCode).json({ error: error.message })
     }
+<<<<<<< HEAD
+=======
+
+    res.status(error.statusCode).json({ error: error.message })
+
+    next()
+>>>>>>> 48429940c7c5cf95186906d64f649eb40d2def19
 }
 
 module.exports = handleErrors;
